@@ -1,9 +1,10 @@
 replicaCount: 1
 
-image:
-  repository: ghcr.io/open-telemetry/demo
-  tag: 1.12.0-frontendproxy
-  pullPolicy: IfNotPresent
+frontendproxy:
+  image:
+    repo: 423966983147.dkr.ecr.ap-south-1.amazonaws.com/roboshop-web
+    tag: 1.12.0-frontendproxy
+    pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
