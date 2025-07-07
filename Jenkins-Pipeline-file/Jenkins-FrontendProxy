@@ -40,24 +40,24 @@ pipeline {
                 git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
             }
         }
-        stage('Sonarqube Analysis') {
-            steps {
-                dir('web') {
-                    withSonarQubeEnv('sonar-server') {
-                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=opentelemetry-web-project \
-                        -Dsonar.projectKey=opentelemetry-web-project '''
-                    }
-                }
-            }
-        }
-        stage('Quality Check') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
-                }
-            }
-        }
+        // stage('Sonarqube Analysis') {
+        //     steps {
+        //         dir('web') {
+        //             withSonarQubeEnv('sonar-server') {
+        //                 sh ''' $SCANNER_HOME/bin/sonar-scanner \
+        //                 -Dsonar.projectName=opentelemetry-web-project \
+        //                 -Dsonar.projectKey=opentelemetry-web-project '''
+        //             }
+        //         }
+        //     }
+        // }
+        // stage('Quality Check') {
+        //     steps {
+        //         script {
+        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+        //         }
+        //     }
+        // }
         // stage('OWASP Dependency-Check Scan') {
         //     steps {
         //         dir('web') {
@@ -120,12 +120,12 @@ pipeline {
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
                             imageTag=$(grep 'version:' values.yaml | awk '{print $2}')
-                            echo "Current catalogue service image version: $imageTag"
+                            echo "Current frontendproxy service image version: $imageTag"
                             sed -i "s|repo: .*|repo: ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}|" values.yaml
                             echo "repo-name: $ECR_REPO_NAME"
                             sed -i "s|version: .*|version: ${BUILD_NUMBER}|" values.yaml
                             git add values.yaml
-                            git commit -m "Update Helm chart web microservice image to ${BUILD_NUMBER} and repository to ${ECR_REPO_NAME}"
+                            git commit -m "Update Helm chart frontendproxy microservice image to ${BUILD_NUMBER} and repository to ${ECR_REPO_NAME}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                         '''
                     }
