@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+  labels:
+    opentelemetry.io/name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: frontendproxy
+    app.kubernetes.io/name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+    app.kubernetes.io/version: "1.12.0"
+    app.kubernetes.io/part-of: opentelemetry-demo
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      opentelemetry.io/name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+  template:
+    metadata:
+      labels:
+        opentelemetry.io/name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: frontendproxy
+        app.kubernetes.io/name: {{ include "opentelemetry-demo-frontendproxy.fullname" . }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: frontendproxy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: OTEL_SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels['app.kubernetes.io/component']
+            - name: OTEL_COLLECTOR_NAME
+              value: {{ .Values.env.OTEL_COLLECTOR_NAME | quote }}
+            - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+              value: {{ .Values.env.OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE | quote }}
+            - name: ENVOY_PORT
+              value: {{ .Values.env.ENVOY_PORT | quote }}
+            - name: FLAGD_HOST
+              value: {{ .Values.env.FLAGD_HOST | quote }}
+            - name: FLAGD_PORT
+              value: {{ .Values.env.FLAGD_PORT | quote }}
+            - name: FLAGD_UI_HOST
+              value: {{ .Values.env.FLAGD_UI_HOST | quote }}
+            - name: FLAGD_UI_PORT
+              value: {{ .Values.env.FLAGD_UI_PORT | quote }}
+            - name: FRONTEND_HOST
+              value: {{ .Values.env.FRONTEND_HOST | quote }}
+            - name: FRONTEND_PORT
+              value: {{ .Values.env.FRONTEND_PORT | quote }}
+            - name: GRAFANA_SERVICE_HOST
+              value: {{ .Values.env.GRAFANA_SERVICE_HOST | quote }}
+            - name: GRAFANA_SERVICE_PORT
+              value: {{ .Values.env.GRAFANA_SERVICE_PORT | quote }}
+            - name: IMAGE_PROVIDER_HOST
+              value: {{ .Values.env.IMAGE_PROVIDER_HOST | quote }}
+            - name: IMAGE_PROVIDER_PORT
+              value: {{ .Values.env.IMAGE_PROVIDER_PORT | quote }}
+            - name: JAEGER_SERVICE_HOST
+              value: {{ .Values.env.JAEGER_SERVICE_HOST | quote }}
+            - name: JAEGER_SERVICE_PORT
+              value: {{ .Values.env.JAEGER_SERVICE_PORT | quote }}
+            - name: LOCUST_WEB_HOST
+              value: {{ .Values.env.LOCUST_WEB_HOST | quote }}
+            - name: LOCUST_WEB_PORT
+              value: {{ .Values.env.LOCUST_WEB_PORT | quote }}
+            - name: OTEL_COLLECTOR_HOST
+              value: "$(OTEL_COLLECTOR_NAME)"
+            - name: OTEL_COLLECTOR_PORT_GRPC
+              value: {{ .Values.env.OTEL_COLLECTOR_PORT_GRPC | quote }}
+            - name: OTEL_COLLECTOR_PORT_HTTP
+              value: {{ .Values.env.OTEL_COLLECTOR_PORT_HTTP | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=$(OTEL_SERVICE_NAME),service.namespace=opentelemetry-demo,service.version=1.12.0"
+          resources:
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+          securityContext:
+            runAsGroup: 101
+            runAsNonRoot: true
+            runAsUser: 101

@@ -17,7 +17,7 @@
 // }     
      
      
-     pipeline {
+pipeline {
     agent any 
     tools {
         nodejs 'nodejs'
@@ -37,7 +37,7 @@
         }
         stage('Checkout from Git') {
             steps {
-                git branch: 'develop', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/robo-stan-shop-ecommerce-three-tier-application.git'
+                git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
             }
         }
         stage('Sonarqube Analysis') {
@@ -45,8 +45,8 @@
                 dir('web') {
                     withSonarQubeEnv('sonar-server') {
                         sh ''' $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=roboapp-web-project \
-                        -Dsonar.projectKey=roboapp-web-project '''
+                        -Dsonar.projectName=opentelemetry-web-project \
+                        -Dsonar.projectKey=opentelemetry-web-project '''
                     }
                 }
             }
@@ -102,16 +102,16 @@
         }
         stage('Checkout Code') {
             steps {
-                git branch: 'develop', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/robo-stan-shop-ecommerce-three-tier-application.git'
+                git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
             }
         }
         stage('Update Helm values.yaml') {
             environment {
-                GIT_REPO_NAME = "robo-stan-shop-ecommerce-three-tier-application"
+                GIT_REPO_NAME = "ultimate-devops-project-aws"
                 GIT_USER_NAME = "Varshil2298"
             }
             steps {
-                dir('EKS/helm/web') {
+                dir('EKS/helm/frontend-proxy') {
                     withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                         sh '''
                             git config user.email 'devopstest@gmail.com'
@@ -126,7 +126,7 @@
                             sed -i "s|version: .*|version: ${BUILD_NUMBER}|" values.yaml
                             git add values.yaml
                             git commit -m "Update Helm chart web microservice image to ${BUILD_NUMBER} and repository to ${ECR_REPO_NAME}"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:develop
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                         '''
                     }
                 }
@@ -159,7 +159,7 @@ post {
             ])
 
             // Send Slack notification
-        slacknotificationmethod("${currentBuild.result}")   
+        // slacknotificationmethod("${currentBuild.result}")   
         
 
     }
