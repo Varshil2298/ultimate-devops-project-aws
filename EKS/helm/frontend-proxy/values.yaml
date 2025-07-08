@@ -2,8 +2,8 @@ replicaCount: 1
 
 frontendproxy:
   image:
-    repo: 423966983147.dkr.ecr.ap-south-1.amazonaws.com/roboshop-web
-    version: 1.12.0-frontendproxy
+    repo: 851725549954.dkr.ecr.us-east-1.amazonaws.com/opentelemetry-frontend-proxy
+    version: 23
     pullPolicy: IfNotPresent
 
 nameOverride: ""
