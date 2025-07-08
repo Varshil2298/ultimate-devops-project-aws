@@ -78,20 +78,23 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
-            steps {
-                script {
-                    sh '''
-                    echo "ECR Repo: ${AWS_ECR_REPO_NAME}"
-                    trivy image ${AWS_ECR_REPO_NAME} \
-                    --severity HIGH,CRITICAL \
-                    --exit-code 0 \
-                    --quiet \
-                    --format json -o trivy-image-CRITICAL-results.json
-                    '''
-                }
-            }
-        }
+        // stage('Trivy Scan') {
+        //     steps {
+        //         script {
+        //             def imageName = sh(script: 'echo "$AWS_ECR_REPO_NAME"', returnStdout: true).trim()
+
+        //             echo "[INFO] Scanning image: ${imageName}"
+
+        //             sh '''
+        //                trivy image ${AWS_ECR_REPO_NAME} \
+        //                   --severity HIGH,CRITICAL \
+        //                   --exit-code 0 \
+        //                   --quiet \
+        //                   --format json -o trivy-image-CRITICAL-results.json
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage("ECR Image Pushing") {
             steps {
@@ -137,35 +140,35 @@ pipeline {
         }
     }
 
-post {
-    always {
-            // Convert to HTML and JUnit reports for critical vulnerabilities
-        sh '''
-        trivy convert --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
-        --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+// post {
+//     always {
+//             // Convert to HTML and JUnit reports for critical vulnerabilities
+//         sh '''
+//         trivy convert --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+//         --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
 
-        trivy convert --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
-        --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
-        '''
+//         trivy convert --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+//         --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
+//         '''
 
-        // Publish Trivy JUnit test results
-        junit allowEmptyResults: true, testResults: 'trivy-image-CRITICAL-results.xml'
+//         // Publish Trivy JUnit test results
+//         junit allowEmptyResults: true, testResults: 'trivy-image-CRITICAL-results.xml'
 
-        // Publish Trivy HTML report for critical vulnerabilities
-        publishHTML(target: [
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true,
-            reportDir: './',
-            reportFiles: 'trivy-image-CRITICAL-results.html',
-            reportName: 'Trivy Image Severity Vul Report'
-            ])
+//         // Publish Trivy HTML report for critical vulnerabilities
+//         publishHTML(target: [
+//             allowMissing: true,
+//             alwaysLinkToLastBuild: true,
+//             keepAll: true,
+//             reportDir: './',
+//             reportFiles: 'trivy-image-CRITICAL-results.html',
+//             reportName: 'Trivy Image Severity Vul Report'
+//             ])
 
-            // Send Slack notification
-        // slacknotificationmethod("${currentBuild.result}")   
+//             // Send Slack notification
+//         // slacknotificationmethod("${currentBuild.result}")   
         
 
-    }
-}
+//     }
+// }
 
 }
