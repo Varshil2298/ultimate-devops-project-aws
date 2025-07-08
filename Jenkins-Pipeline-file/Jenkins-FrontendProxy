@@ -77,11 +77,12 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Trivy Scan') {
             steps {
                 script {
                     sh '''
+                    echo "ECR Repo: ${AWS_ECR_REPO_NAME}"
                     trivy image ${AWS_ECR_REPO_NAME} \
                     --severity HIGH,CRITICAL \
                     --exit-code 0 \
