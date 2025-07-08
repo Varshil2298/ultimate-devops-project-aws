@@ -77,19 +77,34 @@ pipeline {
                 }
             }
         }
+        // stage('Trivy Scan') {
+        //     steps {
+        //         script {
+        //             sh """
+        //             trivy image ${env.AWS_ECR_REPO_NAME} \
+        //             --severity HIGH,CRITICAL \
+        //             --exit-code 0 \
+        //             --quiet \
+        //             --format json -o trivy-image-CRITICAL-results.json
+        //             """
+        //         }
+        //     }
+        // }
         stage('Trivy Scan') {
             steps {
-                script {
-                    sh """
-                    trivy image ${env.AWS_ECR_REPO_NAME} \
-                    --severity HIGH,CRITICAL \
-                    --exit-code 0 \
-                    --quiet \
-                    --format json -o trivy-image-CRITICAL-results.json
-                    """
+                withEnv(["IMAGE_NAME=${AWS_ECR_REPO_NAME}"]) {
+                    sh '''
+                        echo "[INFO] Scanning image: $IMAGE_NAME"
+                        trivy image "$IMAGE_NAME" \
+                           --severity HIGH,CRITICAL \
+                           --exit-code 0 \
+                           --quiet \
+                           --format json -o trivy-image-CRITICAL-results.json
+                    '''
                 }
             }
         }
+
         stage("ECR Image Pushing") {
             steps {
                 script {
