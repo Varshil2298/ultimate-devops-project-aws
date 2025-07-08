@@ -23,7 +23,7 @@ pipeline {
         nodejs 'nodejs'
     }
     environment  {
-        // SCANNER_HOME=tool 'sonar-scanner'
+        SCANNER_HOME=tool 'sonar-scanner'
         AWS_ACCOUNT_ID = credentials('ACCOUNT_ID')
         AWS_ECR_REPO_NAME = credentials('ECR_REPO')
         AWS_DEFAULT_REGION = 'us-east-1'
@@ -40,24 +40,24 @@ pipeline {
                 git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
             }
         }
-        // stage('Sonarqube Analysis') {
-        //     steps {
-        //         dir('web') {
-        //             withSonarQubeEnv('sonar-server') {
-        //                 sh ''' $SCANNER_HOME/bin/sonar-scanner \
-        //                 -Dsonar.projectName=opentelemetry-web-project \
-        //                 -Dsonar.projectKey=opentelemetry-web-project '''
-        //             }
-        //         }
-        //     }
-        // }
-        // stage('Quality Check') {
-        //     steps {
-        //         script {
-        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
-        //         }
-        //     }
-        // }
+        stage('Sonarqube Analysis') {
+            steps {
+                dir('src/frontend-proxy') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=opentelemetry-web-project \
+                        -Dsonar.projectKey=opentelemetry-web-project '''
+                    }
+                }
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            }
+        }
         // stage('OWASP Dependency-Check Scan') {
         //     steps {
         //         dir('web') {
