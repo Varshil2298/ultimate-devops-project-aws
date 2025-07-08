@@ -99,6 +99,7 @@ pipeline {
         stage("ECR Image Pushing") {
             steps {
                 script {
+                    withAWS(credentials: 'aws-credentials', region: "${AWS_DEFAULT_REGION}") {
                         sh 'aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${REPOSITORY_URI}'
                         echo "docker tag ${AWS_ECR_REPO_NAME}${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}"
                         sh 'docker tag ${AWS_ECR_REPO_NAME} ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}'
@@ -106,6 +107,7 @@ pipeline {
                 }
             }
         }
+    }
         stage('Checkout Code') {
             steps {
                 git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
