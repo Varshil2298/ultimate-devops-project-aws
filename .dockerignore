@@ -1,0 +1,12 @@
+# Ignore unwanted root files/folders
+.git
+.gitignore
+README.md
+LICENSE
+
+# Ignore all node_modules (from all levels)
+**/node_modules
+
+# Allow these (if needed)
+!pb/
+!src/
