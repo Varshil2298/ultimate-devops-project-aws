@@ -4,8 +4,8 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# These files are in the current folder (src/frontend), so no prefix needed
-COPY package*.json ./
+# Copy package.json and package-lock.json to install dependencies
+COPY ./src/frontend/package*.json ./
 RUN npm ci
 
 # Stage 2: Build
