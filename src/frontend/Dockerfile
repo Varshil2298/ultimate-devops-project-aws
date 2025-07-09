@@ -16,8 +16,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 
 # These are relative to src/frontend folder
-COPY ../pb ./pb
-COPY . .
+COPY ./pb ./pb
+COPY ./src/frontend ./
 
 RUN npm run grpc:generate
 RUN npm run build

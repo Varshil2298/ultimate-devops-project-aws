@@ -69,14 +69,12 @@ pipeline {
         stage("Docker Image Build") {
             steps {
                 script {
-                    dir('src/frontend') {
-                            sh 'docker system prune -f'
-                            sh 'docker container prune -f'
-                            sh 'docker build -t ${AWS_ECR_REPO_NAME} .'
-                    }
-                }
+                    sh 'docker system prune -f'
+                    sh 'docker container prune -f'
+                    sh 'docker build -f src/frontend/Dockerfile -t ${AWS_ECR_REPO_NAME} .'
             }
         }
+    }
 
         // stage('Trivy Scan') {
         //     steps {
