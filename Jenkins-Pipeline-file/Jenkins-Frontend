@@ -1,0 +1,176 @@
+// def slacknotificationmethod(String buildStatus = 'STARTED') {
+//  buildStatus = buildStatus ?: 'SUCCESS'
+
+//  def color 
+
+//  if (buildStatus == 'STARTED') {
+//   color = '#47ec05'
+//   } else if (buildStatus == 'UNSTABLE') {
+//   color = '#d5ee0d'
+//   } else {
+//   color = '#ec2805'
+//   }
+
+//   def msg = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+
+//   slackSend (color: color, message: msg)
+// }     
+     
+     
+pipeline {
+    agent any 
+    tools {
+        nodejs 'nodejs'
+    }
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+        AWS_ACCOUNT_ID = credentials('ACCOUNT_ID')
+        AWS_ECR_REPO_NAME = credentials('ECR_REPO_2')
+        AWS_DEFAULT_REGION = 'us-east-1'
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
+            }
+        }
+        stage('Sonarqube Analysis') {
+            steps {
+                dir('src/frontend') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=opentelemetry-web-project \
+                        -Dsonar.projectKey=opentelemetry-web-project '''
+                    }
+                }
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            }
+        }
+        // stage('OWASP Dependency-Check Scan') {
+        //     steps {
+        //         dir('web') {
+        //             dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+        //             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         }
+        //     }
+        // }
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    dir('src/frontend') {
+                            sh 'docker system prune -f'
+                            sh 'docker container prune -f'
+                            sh 'docker build -t ${AWS_ECR_REPO_NAME} .'
+                    }
+                }
+            }
+        }
+
+        // stage('Trivy Scan') {
+        //     steps {
+        //         script {
+        //             def imageName = sh(script: 'echo "$AWS_ECR_REPO_NAME"', returnStdout: true).trim()
+
+        //             echo "[INFO] Scanning image: ${imageName}"
+
+        //             sh '''
+        //                trivy image ${AWS_ECR_REPO_NAME} \
+        //                   --severity HIGH,CRITICAL \
+        //                   --exit-code 0 \
+        //                   --quiet \
+        //                   --format json -o trivy-image-CRITICAL-results.json
+        //             '''
+        //         }
+        //     }
+        // }
+
+        stage("ECR Image Pushing") {
+            steps {
+                script {
+                    withAWS(credentials: 'aws-creds', region: "${AWS_DEFAULT_REGION}") {
+                        sh 'aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${REPOSITORY_URI}'
+                        echo "docker tag ${AWS_ECR_REPO_NAME}${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}"
+                        sh 'docker tag ${AWS_ECR_REPO_NAME} ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}'
+                        sh 'docker push ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}'
+                }
+            }
+        }
+    }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', credentialsId: 'GITHUB', url: 'https://github.com/Varshil2298/ultimate-devops-project-aws.git'
+            }
+        }
+        stage('Update Helm values.yaml') {
+            environment {
+                GIT_REPO_NAME = "ultimate-devops-project-aws"
+                GIT_USER_NAME = "Varshil2298"
+            }
+            steps {
+                dir('EKS/helm/frontend-proxy') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email 'devopstest@gmail.com'
+                            git config user.name 'Varshil2298'
+                            git status
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep 'version:' values.yaml | awk '{print $2}')
+                            echo "Current frontendproxy service image version: $imageTag"
+                            sed -i "s|repo: .*|repo: ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}|" values.yaml
+                            echo "repo-name: $ECR_REPO_NAME"
+                            sed -i "s|version: .*|version: ${BUILD_NUMBER}|" values.yaml
+                            git add values.yaml
+                            git commit -m "Update Helm chart frontendproxy microservice image to ${BUILD_NUMBER} and repository to ${ECR_REPO_NAME}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+// post {
+//     always {
+//             // Convert to HTML and JUnit reports for critical vulnerabilities
+//         sh '''
+//         trivy convert --format template --template "@/usr/local/share/trivy/templates/html.tpl" \
+//         --output trivy-image-CRITICAL-results.html trivy-image-CRITICAL-results.json
+
+//         trivy convert --format template --template "@/usr/local/share/trivy/templates/junit.tpl" \
+//         --output trivy-image-CRITICAL-results.xml trivy-image-CRITICAL-results.json
+//         '''
+
+//         // Publish Trivy JUnit test results
+//         junit allowEmptyResults: true, testResults: 'trivy-image-CRITICAL-results.xml'
+
+//         // Publish Trivy HTML report for critical vulnerabilities
+//         publishHTML(target: [
+//             allowMissing: true,
+//             alwaysLinkToLastBuild: true,
+//             keepAll: true,
+//             reportDir: './',
+//             reportFiles: 'trivy-image-CRITICAL-results.html',
+//             reportName: 'Trivy Image Severity Vul Report'
+//             ])
+
+//             // Send Slack notification
+//         // slacknotificationmethod("${currentBuild.result}")   
+        
+
+//     }
+// }
+
+}

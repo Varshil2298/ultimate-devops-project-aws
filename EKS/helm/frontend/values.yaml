@@ -1,0 +1,27 @@
+frontend:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/open-telemetry/demo
+    tag: 1.12.0-frontend
+    pullPolicy: IfNotPresent
+
+  adService: "opentelemetry-demo-adservice:8080"
+  cartService: "opentelemetry-demo-cartservice:8080"
+  checkoutService: "opentelemetry-demo-checkoutservice:8080"
+  currencyService: "opentelemetry-demo-currencyservice:8080"
+  productCatalogService: "opentelemetry-demo-productcatalogservice:8080"
+  recommendationService: "opentelemetry-demo-recommendationservice:8080"
+  shippingService: "opentelemetry-demo-shippingservice:8080"
+  flagdHost: "opentelemetry-demo-flagd"
+  flagdPort: 8013
+  webServiceName: "frontend-web"
+  resources:
+    limits:
+      memory: 250Mi
+
+otel:
+  collectorName: opentelemetry-demo-otelcol
+  metricsTemporality: cumulative
+
+serviceAccount:
+  name: opentelemetry-demo

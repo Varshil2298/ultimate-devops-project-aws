@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opentelemetry-demo-frontend.fullname" . }}
+  labels:
+    {{- include "opentelemetry-demo-frontend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: service
+          env:
+            - name: OTEL_SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels['app.kubernetes.io/component']
+            - name: OTEL_COLLECTOR_NAME
+              value: {{ .Values.otel.collectorName }}
+            - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+              value: {{ .Values.otel.metricsTemporality }}
+            - name: FRONTEND_PORT
+              value: "8080"
+            - name: FRONTEND_ADDR
+              value: ":8080"
+            - name: AD_SERVICE_ADDR
+              value: {{ .Values.frontend.adService }}
+            - name: CART_SERVICE_ADDR
+              value: {{ .Values.frontend.cartService }}
+            - name: CHECKOUT_SERVICE_ADDR
+              value: {{ .Values.frontend.checkoutService }}
+            - name: CURRENCY_SERVICE_ADDR
+              value: {{ .Values.frontend.currencyService }}
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: {{ .Values.frontend.productCatalogService }}
+            - name: RECOMMENDATION_SERVICE_ADDR
+              value: {{ .Values.frontend.recommendationService }}
+            - name: SHIPPING_SERVICE_ADDR
+              value: {{ .Values.frontend.shippingService }}
+            - name: FLAGD_HOST
+              value: {{ .Values.frontend.flagdHost }}
+            - name: FLAGD_PORT
+              value: "{{ .Values.frontend.flagdPort }}"
+            - name: OTEL_COLLECTOR_HOST
+              value: $(OTEL_COLLECTOR_NAME)
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://$(OTEL_COLLECTOR_NAME):4317"
+            - name: WEB_OTEL_SERVICE_NAME
+              value: {{ .Values.frontend.webServiceName }}
+            - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: "http://localhost:8080/otlp-http/v1/traces"
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=$(OTEL_SERVICE_NAME),service.namespace=opentelemetry-demo,service.version=1.12.0"
+          resources:
+            limits:
+              memory: {{ .Values.frontend.resources.limits.memory }}
+          securityContext:
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001

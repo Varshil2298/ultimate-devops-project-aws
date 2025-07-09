@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opentelemetry-demo-frontend.fullname" . }}
+  labels:
+    {{- include "opentelemetry-demo-frontend.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      name: tcp-service
+      targetPort: 8080
+  selector:
+    {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 4 }}
