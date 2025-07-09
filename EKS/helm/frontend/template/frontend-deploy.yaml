@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata:
+metadata: 
   name: {{ include "opentelemetry-demo-frontend.fullname" . }}
   labels:
     {{- include "opentelemetry-demo-frontend.labels" . | nindent 4 }}
@@ -18,7 +18,7 @@ spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
         - name: frontend
-          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          image: "{{ .Values.frontend.image.repo }}:{{ .Values.frontend.image.version }}"
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - containerPort: 8080

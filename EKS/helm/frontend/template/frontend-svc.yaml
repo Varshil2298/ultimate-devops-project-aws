@@ -11,4 +11,4 @@ spec:
       name: tcp-service
       targetPort: 8080
   selector:
-    {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 4 }}
+    {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 4 }

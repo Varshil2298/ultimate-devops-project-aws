@@ -1,8 +1,8 @@
 frontend:
   replicaCount: 1
   image:
-    repository: ghcr.io/open-telemetry/demo
-    tag: 1.12.0-frontend
+    repo: ghcr.io/open-telemetry/demo
+    version: 1.12.0-frontend
     pullPolicy: IfNotPresent
 
   adService: "opentelemetry-demo-adservice:8080"
