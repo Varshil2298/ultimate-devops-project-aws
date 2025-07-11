@@ -2,8 +2,8 @@ replicaCount: 1
 
 frontendproxy:
   image:
-    repo: 851725549954.dkr.ecr.us-east-1.amazonaws.com/opentelemetry-frontend-proxy
-    version: 25
+    repo: 851725549954.dkr.ecr.us-east-1.amazonaws.com/opentelemetry-frontend
+    version: 9
     pullPolicy: IfNotPresent
 
 nameOverride: ""
