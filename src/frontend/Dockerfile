@@ -1,48 +1,59 @@
-# Stage 1: Install dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM docker.io/library/node:22-slim AS builder
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json to install dependencies
-COPY ./src/frontend/package*.json ./
+COPY ./src/frontend/package.json package.json
+COPY ./src/frontend/package-lock.json package-lock.json
+
 RUN npm ci
 
-# Stage 2: Build
-FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat protobuf-dev protoc
+COPY ./src/frontend/components/ components/
+COPY ./src/frontend/gateways/ gateways/
+COPY ./src/frontend/pages/ pages/
+COPY ./src/frontend/protos/ protos/
+COPY ./src/frontend/providers/ providers/
+COPY ./src/frontend/services/ services/
+COPY ./src/frontend/styles/ styles/
+COPY ./src/frontend/types/ types/
 
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY ./src/frontend/utils/enums/ utils/enums/
+COPY ./src/frontend/utils/telemetry/ utils/telemetry/
+COPY ./src/frontend/utils/imageLoader.js utils/imageLoader.js
+COPY ./src/frontend/utils/Request.ts utils/Request.ts
 
-# These are relative to src/frontend folder
-COPY ./pb ./pb
-COPY ./src/frontend ./
+COPY ./src/frontend/next.config.js next.config.js
+COPY ./src/frontend/tsconfig.json tsconfig.json
 
-RUN npm run grpc:generate
 RUN npm run build
 
-# Stage 3: Final runner
-FROM node:20-alpine AS runner
+# -----------------------------------------------------------------------------
+
+FROM docker.io/library/node:22-slim AS deps
+
 WORKDIR /app
-RUN apk add --no-cache protobuf-dev protoc
 
-ENV NODE_ENV=production
+COPY ./src/frontend/package.json package.json
+COPY ./src/frontend/package-lock.json package-lock.json
 
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN npm ci --omit=dev
 
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/utils/telemetry/Instrumentation.js ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# -----------------------------------------------------------------------------
 
-USER nextjs
+FROM gcr.io/distroless/nodejs22-debian12:nonroot
+
+WORKDIR /app
 
 ENV PORT=8080
+
+COPY --from=builder /app/.next/standalone/ ./
+COPY --from=builder /app/.next/static/ .next/static/
+
+COPY --from=deps /app/node_modules/ node_modules/
+
+COPY ./src/frontend/public/ public/
+
+COPY ./src/frontend/utils/telemetry/Instrumentation.js Instrumentation.js
+
 EXPOSE ${PORT}
 
-ENTRYPOINT ["npm", "start"]
+CMD ["--require=./Instrumentation.js", "server.js"]
