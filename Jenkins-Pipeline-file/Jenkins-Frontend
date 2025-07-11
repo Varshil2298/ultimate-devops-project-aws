@@ -117,7 +117,7 @@ pipeline {
                 GIT_USER_NAME = "Varshil2298"
             }
             steps {
-                dir('EKS/helm/frontend-proxy') {
+                dir('EKS/helm/frontend') { 
                     withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                         sh '''
                             git config user.email 'devopstest@gmail.com'
