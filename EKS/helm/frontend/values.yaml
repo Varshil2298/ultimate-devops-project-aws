@@ -1,8 +1,8 @@
 frontend:
   replicaCount: 1
   image:
-    repo: ghcr.io/open-telemetry/demo
-    version: 1.12.0-frontend
+    repo: 851725549954.dkr.ecr.us-east-1.amazonaws.com/opentelemetry-frontend
+    version: 10
     pullPolicy: IfNotPresent
 
   adService: "opentelemetry-demo-adservice:8080"
