@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata: 
-  name: frontend
+  name: {{ include "opentelemetry-demo-frontend.fullname" . }}
   labels:
     opentelemetry.io/name: {{ include "opentelemetry-demo-frontend.fullname" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
