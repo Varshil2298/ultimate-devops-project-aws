@@ -1,3 +1,5 @@
+nameOverride: "opentelmetry-frontend-app" 
+
 frontend:
   replicaCount: 1
   image:
@@ -15,7 +17,6 @@ frontend:
   flagdHost: "opentelemetry-demo-flagd"
   flagdPort: 8013
   webServiceName: "frontend-web"
-  nameOverride: "opentelmetry-frontend-app"
   resources:
     limits:
       memory: 250Mi
