@@ -14,17 +14,13 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ .Chart.Name | quote }}
-      app.kubernetes.io/instance: {{ .Release.Name | quote }}
-      app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-      app.kubernetes.io/component: frontend
+      {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 6 }}
+
   template:
     metadata:
       labels:
-        opentelemetry.io/name: {{ include "opentelemetry-demo-frontend.fullname" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/component: frontend
-        app.kubernetes.io/name: {{ include "opentelemetry-demo-frontend.fullname" . }}
+        {{- include "opentelemetry-demo-frontend.selectorLabels" . | nindent 8 }}
+        {{- include "opentelemetry-demo-frontend.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
