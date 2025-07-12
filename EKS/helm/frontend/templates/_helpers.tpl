@@ -28,5 +28,7 @@ app.kubernetes.io/part-of: opentelemetry-demo
 Selector labels used in Deployment selector and Service selector.
 */}}
 {{- define "opentelemetry-demo-frontend.selectorLabels" -}}
-opentelemetry.io/name: {{ include "opentelemetry-demo-frontend.fullname" . }}
+app.kubernetes.io/name: {{ include "opentelemetry-demo-frontend.fullname" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: frontend
 {{- end }}
