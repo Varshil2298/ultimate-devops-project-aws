@@ -3,7 +3,7 @@ kind: Deployment
 metadata: 
   name: {{ include "opentelemetry-demo-frontend.fullname" . }}
   labels:
-    "{{- include 'opentelemetry-demo-frontend.labels' . | nindent 4 }}"
+    {{- include 'opentelemetry-demo-frontend.labels' . | nindent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   revisionHistoryLimit: 10
